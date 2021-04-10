@@ -9,7 +9,11 @@ uses
   {$ELSE}
   Vcl.Forms,
   {$ENDIF}
+  {$IFDEF BLT}
+  BearLibTerminal in 'Third-Party\BearLibTerminal\BearLibTerminal.pas',
+  {$ELSE}
   DisciplesRL.MainForm in 'Forms\DisciplesRL.MainForm.pas' {MainForm},
+  {$ENDIF}
   DisciplesRL.Map in 'DisciplesRL.Map.pas',
   DisciplesRL.Resources in 'DisciplesRL.Resources.pas',
   DisciplesRL.Creatures in 'DisciplesRL.Creatures.pas',
@@ -30,7 +34,39 @@ uses
   DisciplesRL.Button in 'DisciplesRL.Button.pas',
   DisciplesRL.Frame in 'DisciplesRL.Frame.pas';
 
-{$R *.res}
+{$IFDEF BLT}
+var
+  Key: Word = 0;
+  IsRender: Boolean = True;
+begin
+  terminal_open();
+  Map := TMap.Create;
+  Scenes := TScenes.Create;
+  try
+    Scenes.Render;
+    terminal_refresh();
+    repeat
+      if IsRender then Scenes.Render;
+      Key := 0;
+      if terminal_has_input() then
+      begin
+        Key := terminal_read();
+        Scenes.Update(Key);
+        IsRender := True;
+        Continue;
+      end;
+      if IsRender then terminal_refresh();
+      terminal_delay(25);
+      IsRender := False;
+    until (Key = TK_CLOSE);
+    terminal_close();
+  finally
+    Scenes.Free;
+    Map.Free;
+  end;
+{$ELSE}
+
+  {$R *.res}
 
 begin
   Application.Initialize;
@@ -41,5 +77,5 @@ begin
   Application.Title := 'DisciplesRL';
   Application.CreateForm(TMainForm, MainForm);
   Application.Run;
-
+{$ENDIF}
 end.
